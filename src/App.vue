@@ -82,18 +82,20 @@
 
        </span>
     </div>
+    <hwLoad></hwLoad>
   </div>
 </template>
 
 <script>
 import hwImg from "./components/hw-img.vue"
+import hwLoad from "./components/hw-load.vue"
 export default {
   name: 'App',
   data(){return{
     imgs_srpead : false, //图片展开收起状态
   }},
   components: {
-      hwImg
+      hwImg,hwLoad
   },
   props:{
       title :{
