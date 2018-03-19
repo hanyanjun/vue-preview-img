@@ -1,17 +1,14 @@
 <template>
   <div id="hw-preview_img_wrap">
-    <h6 class="title">{{title}}</h6>
-    <i class="icon-close pointer"></i>
+    <h6 class="title">{{title}}{{count+1}}/{{len}}</h6>
+    <i class="icon-close pointer" @click.stop="close"></i>
     <div class="pre_img_content">
-      <div class="pre_img_con_cur">
         <i class="icon icon-arrow-l" @click.stop="pre"></i>
-        <div :class="['pre_img_cur',{'pre_img_cur_move':is_move}]"  ref="pre_img_content">
+        <div :class="['pre_img_cur_wrap',{'pre_img_cur_move':is_move}]"  ref="pre_img_content">
            <preview-img
              :url="url"
              :scale="scale"
              :rotate="rotate"
-             :top.sync="top"
-             :left.sync="left"
              :preImgCss ="trans"
              :initWidth.sync="i_w"
              :i_top.sync="i_top"
@@ -24,8 +21,8 @@
            </preview-img>
         </div>
         <i class="icon icon-arrow-r" @click.stop="suf"></i>
-      </div>
     </div>
+    <div class="imgs_info"></div>
     <div :class="['pre_img_con_fn',{pre_img_con_fn_active :imgs_srpead }]">
       <template v-if="imgs_srpead">
         <span class="fn_module pointer fn_spread" @click.stop="imgs_srpead = false">
@@ -39,9 +36,15 @@
             展开列表
        </span>
       </template>
-      <span class="fn_module pointer">
+      <span class="fn_module pointer" @click.stop="autoPlay">
+          <template v-if="is_play">
+           <i class="icon icon-pause"></i>
+             暂停播放
+          </template>
+          <template v-if="!is_play">
            <i class="icon icon-play"></i>
-            自动播放
+             自动播放
+          </template>
        </span><span class="fn_module pointer" @click.stop="bigger">
            <i class="icon icon-scale-up"></i>
             放大
@@ -56,7 +59,7 @@
             复位
        </span>
     </div>
-    <div class="pre_img_con_list" v-show="imgs_srpead">
+    <div class="pre_img_con_list" v-show="imgs_srpead" :style="listStyle">
       <i class="icon pointer icon-arrow-l"></i>
       <i class="icon pointer icon-arrow-r"></i>
        <span :class="['img',{'img_active':index == count}]" v-for="(item,index) in urls">
@@ -85,13 +88,19 @@ export default {
     i_h : 0, //图片本身高度
     sX : 0, //鼠标按下初始x坐标
     sY : 0, //鼠标按下初始y坐标
+    mX : 0,
+    mY : 0,
     i_top : 0, //初始化时图片top值
     i_left : 0, //初始化时图片left值
     initTop : 0, //每次移动的基础top值
     initLeft : 0, //每次移动的基础left值
     top : 0, //需要更改的预览图片的top值
     left : 0, //需要更改的预览图片的left值
-    updatePos : false //更新图片位置信息
+    updatePos : false, //更新图片位置信息
+    is_play : false,//是否自动播放
+    play_interval : '', //播放的定时器
+    listStyle : {},
+    initCount : 0
   }},
   components: {
       hwImg,hwLoad,previewImg
@@ -133,7 +142,7 @@ export default {
       }else{
         m = this.i_h*this.scale > this.w || this.i_w*this.scale > this.h;
       }
-      m = true;
+//      m = true;
       this.$nextTick(()=>{
         if(m){
           this.$refs.pre_img_content.addEventListener('mousedown',this.touchstart,false);
@@ -149,9 +158,9 @@ export default {
 //        可移动是在宽度或者高度溢出时
       let max = 0;
       if(this.rotate/90%2 == 0){
-        max = (this.i_h*this.scale - this.h)/2 + this.h  - this.moveMinWidth ;
+        max = this.h + this.i_h*(this.scale-1)/2 - this.moveMinWidth ;
       }else{
-        max = (this.i_w*this.scale - this.h)/2 + this.h  - this.moveMinWidth;
+        max = this.h  - this.i_h/2 + this.i_w*this.scale/2   - this.moveMinWidth;
       }
       return max;
     },
@@ -159,13 +168,15 @@ export default {
 //        可移动是在宽度或者高度溢出时
       let max = 0;
       if(this.rotate/90%2 == 0){
-        max = this.i_w*this.scale  + this.i_left - this.moveMinWidth;
+        max = (this.i_w*this.scale +  this.w)/2  - this.moveMinWidth;
       }else{
-        max = (this.i_h*this.scale - this.w)/2 + this.w  - this.moveMinWidth;
+        max = (this.i_w+ this.i_h*this.scale)/2  - this.moveMinWidth;
       }
-      console.log(max);
       return max;
     },
+    len(){
+        return this.urls.length;
+    }
   },
   props:{
       title :{
@@ -175,12 +186,12 @@ export default {
       urls:{
           type : Array,
           default : function () {
-            return ['https://www.hanyanjun.top/static/image/2.jpg','https://www.hanyanjun.top/static/image/3.jpg','https://www.hanyanjun.top/static/image/4.jpg','https://www.hanyanjun.top/static/image/5.jpg','https://www.hanyanjun.top/static/image/6.jpg']
+            return ['https://www.hanyanjun.top/static/image/2.jpg','https://www.hanyanjun.top/static/image/3.jpg','https://www.hanyanjun.top/static/image/4.jpg','https://www.hanyanjun.top/static/image/5.jpg','https://www.hanyanjun.top/static/image/6.jpg','https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1521460527371&di=45d13be1e15090e20d1bfb372bc404a1&imgtype=0&src=http%3A%2F%2Fimages2015.cnblogs.com%2Fblog%2F603812%2F201604%2F603812-20160423232657101-1637286243.png  ']
           }
       },
       url:{
         type : String,
-        default : 'https://www.hanyanjun.top/static/image/6.jpg'
+        default : 'https://www.hanyanjun.top/static/image/3.jpg'
       },
       visible:{
           type : Boolean,
@@ -212,12 +223,25 @@ export default {
         type : Number,
         default : 30
       },
+      period : {
+         type : Number,
+         default : 3000
+      },
+      minScale : {
+          type : Number,
+          default : 0.3
+      },
+      scaleDis:{
+          type : Number,
+          default : 0.3
+      }
   },
   methods:{
     select(v){
         this.$emit('update:url',v);
         this.$emit('select',v);
         this.url = v;
+        this.initCount = this.count;
         this.init();
     },
     pre(v){
@@ -231,7 +255,7 @@ export default {
       }
     },
     suf(v){
-      if(this.count < this.urls.length - 1){
+      if(this.count < this.len - 1){
         this.$emit('update:url',this.urls[this.count+1]);
         this.$emit('suf',this.urls[this.count+1]);
         this.url = this.urls[this.count+1];
@@ -242,30 +266,55 @@ export default {
     },
     bigger(){
       let s = this.scale;
-      s += 0.3;
+      s += this.scaleDis;
       if(s > this.maxScale){
-        s = 4;
+        s = this.maxScale;
       }
       this.scale = s;
       this.$emit('update:scale',s);
     },
     smaller(){
       let s = this.scale;
-      s -= 0.3;
-      if(s < 0.3){
-        s = 0.3;
+      s -= this.scaleDis;
+      if(s < this.minScale){
+        s = this.minScale;
+      }
+      if(s <= 1){
+        this.init();
       }
       this.scale = s;
       this.$emit('update:scale',s);
-
+    },
+    init_pos(t1,t2,direction){
+        if(direction == 'y'){
+          if(t1 <= t2){
+            this.top = t1 - t2+ this.initTop  <=  - this.maxT + this.h - this.i_h  ?  - this.maxT + this.h - this.i_h     : t1 - t2 + this.initTop ;
+          }else{
+            this.top =  t1 - t2 + this.initTop >= this.maxT   ?  this.maxT   :  t1 - t2 + this.initTop ;
+          }
+        }else{
+          if(t1 <= t2){
+//            con
+            this.left = t1 - t2 + this.initLeft   <=  - this.maxL  ?  - this.maxL   :  t1 - t2 + this.initLeft ;
+          }else{
+            this.left = t1 - t2 + this.initLeft >=  this.maxL ?  this.maxL :  t1 - t2 + this.initLeft ;
+          }
+        }
     },
     spin(){
       let r = this.rotate;
       r += 90;
+      if(r == 360){
+          r = 0;
+      }
       this.rotate = r;
+      this.init_pos(0,0,'y');
+      this.init_pos(0,0,'x');
       this.$emit('update:rotate',r);
     },
     init(){
+      this.top = this.i_top;
+      this.left = this.i_left;
       this.rotate = this.init_rotate;
       this.scale = this.init_scale;
       this.preImgCss = this.init_pre_img_css;
@@ -287,23 +336,33 @@ export default {
       e.preventDefault();
       let y = parseInt(e.clientY);
       let x = parseInt(e.clientX);
-      let maxT = this.maxT;
-      let maxL = this.maxL;
-      console.log(this.initLeft);
-      if(y <= this.sY){
-        this.top = y - this.sY+ this.initTop  <=  - maxT + this.i_top?  - maxT + this.i_top  : y - this.sY + this.initTop ;
-      }else{
-        this.top =   y - this.sY + this.initTop >= maxT + this.i_top ?  maxT + this.i_top:  y - this.sY + this.initTop ;
-      }
-      if(x <= this.sX){
-        this.left = x - this.sX + this.initLeft   <=  -maxL + this.initLeft ?  -maxL + this.initLeft :  x - this.sX + this.initLeft ;
-      }else{
-        this.left = x - this.sX + this.initLeft >=  maxL+ this.initLeft ?  maxL+ this.initLeft :  x - this.sX + this.initLeft ;
-      }
+      this.init_pos(y,this.sY,'y');
+      this.init_pos(x,this.sX,'x');
     },
     tEventUp(e){
       document.removeEventListener('mousemove',this.touchmove,false);
     },
+    autoPlay(){
+      this.is_play = !this.is_play;
+      this.initCount = this.count;
+      if(this.is_play){
+        this.play_interval = setInterval(()=>{
+            if(this.count +1 >= this.len){
+                this.url = this.urls[0];
+                this.$emit('update:url',this.urls[0]);
+            }else{
+              this.suf();
+            }
+            this.listStyle = {'marginLeft' : `-${(this.count - this.initCount)*120}px`}
+        },this.period);
+      }else{
+          clearInterval(this.play_interval);
+      }
+    },
+    close(){
+        this.url = '';
+        this.$emit('update:url','');
+    }
   }
 }
 </script>
@@ -339,34 +398,30 @@ export default {
     width: 1000px;
     height: 600px;
     position: absolute;
+    text-align: left;
     top: 50%;
     left: 50%;
     border: 1px solid rgba(255,255,255,0.3);
-    margin-left: -500px;
     transform: translateY(-54%);
-    .pre_img_con_cur{
-      width: 100%;
-      height: 600px;
-      /*display: flex;*/
-      /*justify-content: space-around;*/
-      .icon{
-        font-weight: bolder;
-        color: #717171;
-        line-height: 600px;
-        font-size: 70px;
-      }
-      .icon:hover{
-        color: white;
-        cursor: pointer;
-      }
+    margin-left: -500px;
+    display: flex;
+    flex-wrap: nowrap;
+    .icon{
+      font-weight: bolder;
+      color: #717171;
+      line-height: 600px;
+      font-size: 70px;
     }
-    .pre_img_cur{
-      display: inline-block;
+    .icon:hover{
+      color: white;
+      cursor: pointer;
+    }
+    .pre_img_cur_wrap{
       width: 800px;
       height: 600px;
       overflow: hidden;
-      border: 1px solid white;
       position: relative;
+      margin: 0 auto;
       vertical-align: middle;
       img{
         display: inline-block;
@@ -382,7 +437,6 @@ export default {
     }
     .pre_img_cur_move{
       cursor: move;
-      border: 1px solid red;
     }
   }
   .pre_img_con_fn{

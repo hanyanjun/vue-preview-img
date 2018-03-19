@@ -89,10 +89,12 @@ export default{
                 this.i_w = w;
                 this.i_h = w/s;
                 this.top = (h - w/s)/2;
+                this.left = 0;
                 this.img_w_h = {width:'100%'};
               }else{
                 this.i_h = h;
                 this.i_w = w*s;
+                this.top = 0;
                 this.left = (w - h*s)/2;
                 this.img_w_h = {height:'100%'};
               }
@@ -105,9 +107,10 @@ export default{
             this.$emit('update:i_top',this.top);
             this.$emit('update:i_left',this.left);
           }
-        },1000);
+        },300);
       },
       select_img(){
+        console.log(this.$refs.pre_img_content.getBoundingClientRect());
         this.$emit('select',this.url);
       }
     },
@@ -128,13 +131,7 @@ export default{
               this.$emit('update:initLeft',left);
               this.$emit('update:updatePos',false);
             }
-      },
-//      preImgCss:{
-//            handler :function (v) {
-//              console.log(v);
-//            },
-//            deep : true
-//      }
+      }
     }
 }
 </script>
