@@ -1,6 +1,6 @@
 <template>
   <div id="hw-preview_img_wrap">
-    <h6 class="title">{{title}}{{count+1}}/{{len}}</h6>
+    <h6 class="title">{{title}}({{count+1}}/{{len}})</h6>
     <i class="icon-close pointer" @click.stop="close"></i>
     <div class="pre_img_content">
         <i class="icon icon-arrow-l" @click.stop="pre"></i>
@@ -59,14 +59,18 @@
             复位
        </span>
     </div>
-    <div class="pre_img_con_list" v-show="imgs_srpead" :style="listStyle">
-      <i class="icon pointer icon-arrow-l"></i>
-      <i class="icon pointer icon-arrow-r"></i>
-       <span :class="['img',{'img_active':index == count}]" v-for="(item,index) in urls">
+    <div class="pre_img_con_list" v-show="imgs_srpead">
+      <i class="icon pointer icon-arrow-l" @click.stop="l_pre"></i>
+      <div class="img_list_wrap" :style="[{'width' : `${wrapW}px`}]">
+        <div class="pre_img_list_wrap" :style="[{'marginLeft': `${is_switch  ? listleftC : listLeft}px`},{'width' : `${listW}px`}]" ref="pre_img_list_wrap">
+         <span :class="['img',{'img_active':index == count}]" v-for="(item,index) in urls">
            <preview-img :url="item" @select="select">
              <i class="loading_icon icon-load" slot="load"></i>
            </preview-img>
-       </span>
+         </span>
+        </div>
+      </div>
+      <i class="icon pointer icon-arrow-r" @click.stop="l_suf"></i>
     </div>
   </div>
 </template>
@@ -99,8 +103,14 @@ export default {
     updatePos : false, //更新图片位置信息
     is_play : false,//是否自动播放
     play_interval : '', //播放的定时器
-    listStyle : {},
-    initCount : 0
+    initCount : null,
+    wrapD : '',
+    wrapW : 0, //整个预览图片的宽度
+    initWrapW : 0, //计算初始化时整个屏幕宽度
+    dWrapW : 0,  //屏幕缩放时变化的宽度
+    listleftC : 0,
+    listInitLeft : 0,
+    is_switch : false, //是否是切换模式
   }},
   components: {
       hwImg,hwLoad,previewImg
@@ -109,6 +119,14 @@ export default {
       this.imgs_srpead = true;
       this.w = parseInt(this.$refs.pre_img_content.offsetWidth);
       this.h = parseInt(this.$refs.pre_img_content.offsetHeight);
+      this.listD = this.$refs.pre_img_list_wrap;
+      this.wrapD = document.querySelector('#hw-preview_img_wrap');
+      this.initWrapW = this.wrapD.getBoundingClientRect().width;
+      window.onresize =()=>{
+          this.wrapW = this.wrapD.getBoundingClientRect().width;
+          this.dWrapW = this.initWrapW - this.wrapW;
+//          this.listInitLeft = this.listInitLeft - (this.wrapW - w);
+      }
       setTimeout(()=>{
         this.$emit('update:url','https://www.hanyanjun.top/static/image/6.jpg');
       },1000);
@@ -120,6 +138,18 @@ export default {
     i_left(v){
       this.left = v;
     },
+    imgs_srpead(v){
+        if(v){
+            this.$nextTick(()=>{
+              this.wrapW = this.wrapD.getBoundingClientRect().width;
+            })
+        }
+    },
+    is_switch(v,o){
+        if(!v){
+//          this.listInitLeft = parseInt(this.listD.style.marginLeft);
+        }
+    }
   },
   computed:{
     count(){
@@ -142,7 +172,6 @@ export default {
       }else{
         m = this.i_h*this.scale > this.w || this.i_w*this.scale > this.h;
       }
-//      m = true;
       this.$nextTick(()=>{
         if(m){
           this.$refs.pre_img_content.addEventListener('mousedown',this.touchstart,false);
@@ -176,6 +205,27 @@ export default {
     },
     len(){
         return this.urls.length;
+    },
+    listW(){
+        return 110*this.len + 40;
+    },
+    maxListW(){
+      return this.listW - this.wrapW + 112;
+    },
+    listLeft(){
+      let s = 0;
+      if(this.wrapW && this.wrapW < this.listW && this.initCount != null){
+        if(this.initCount < this.count){
+          if((this.count - this.initCount)*112  - this.listInitLeft - this.dWrapW > this.maxListW ){
+             s =  -this.maxListW;
+          }else{
+             s = -(this.count - this.initCount)*112 - this.listInitLeft - this.dWrapW;
+          }
+        }else{
+             s = (this.count - this.initCount)*112 + this.listInitLeft - this.dWrapW;
+        }
+      }
+      return s;
     }
   },
   props:{
@@ -186,12 +236,12 @@ export default {
       urls:{
           type : Array,
           default : function () {
-            return ['https://www.hanyanjun.top/static/image/2.jpg','https://www.hanyanjun.top/static/image/3.jpg','https://www.hanyanjun.top/static/image/4.jpg','https://www.hanyanjun.top/static/image/5.jpg','https://www.hanyanjun.top/static/image/6.jpg','https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1521460527371&di=45d13be1e15090e20d1bfb372bc404a1&imgtype=0&src=http%3A%2F%2Fimages2015.cnblogs.com%2Fblog%2F603812%2F201604%2F603812-20160423232657101-1637286243.png  ']
+            return ['https://www.hanyanjun.top/static/image/2.jpg','https://www.hanyanjun.top/static/image/3.jpg','https://www.hanyanjun.top/static/image/4.jpg','https://www.hanyanjun.top/static/image/5.jpg','https://www.hanyanjun.top/static/image/6.jpg','https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1521460527371&di=45d13be1e15090e20d1bfb372bc404a1&imgtype=0&src=http%3A%2F%2Fimages2015.cnblogs.com%2Fblog%2F603812%2F201604%2F603812-20160423232657101-1637286243.png','http://img3.imgtn.bdimg.com/it/u=1410462070,509649449&fm=27&gp=0.jpg','http://file.mumayi.com/forum/201602/28/164722sy84snndg8a0pnsm.jpg','http://dl.bizhi.sogou.com/images/2012/02/11/25025.jpg','http://img4.duitang.com/uploads/item/201206/25/20120625160633_JhFfM.jpeg','http://pic1.win4000.com/wallpaper/f/53bb9aa9c4eef.jpg','http://4493bz.1985t.com/uploads/allimg/141021/4-141021143J7.jpg','http://pic1.win4000.com/wallpaper/4/57b6a7f82383b.jpg','http://pic1.5442.com/2013/0607/04/11.jpg','http://img.zcool.cn/community/03879005798abdc0000018c1b07f124.jpg','http://old.bz55.com/uploads/allimg/140717/1-140GF94204-50.jpg','http://img.mp.sohu.com/upload/20170901/f360fad61b714b669795b13e601e5f1f_th.png','http://up.enterdesk.com/edpic_source/1b/79/40/1b7940ec78c11a7e897bf702db3a77ac.jpg','http://img2.imgtn.bdimg.com/it/u=1361461298,2055198744&fm=27&gp=0.jpg']
           }
       },
       url:{
         type : String,
-        default : 'https://www.hanyanjun.top/static/image/3.jpg'
+        default : 'https://www.hanyanjun.top/static/image/2.jpg'
       },
       visible:{
           type : Boolean,
@@ -241,7 +291,8 @@ export default {
         this.$emit('update:url',v);
         this.$emit('select',v);
         this.url = v;
-        this.initCount = this.count;
+        this.initCount =this.count;
+        this.listInitLeft = this.listleftC;
         this.init();
     },
     pre(v){
@@ -285,6 +336,20 @@ export default {
       this.scale = s;
       this.$emit('update:scale',s);
     },
+    l_suf(){
+      let left = parseInt(this.listD.style.marginLeft);
+      this.listleftC = left - this.wrapW   <  - this.maxListW ?  -this.maxListW :  left - this.wrapW;
+      this.is_switch = true;
+      this.is_play = false;
+      clearInterval(this.play_interval);
+    },
+    l_pre(){
+      let left = parseInt(this.listD.style.marginLeft);
+      this.listleftC = left + this.wrapW  > 0 ?  0  : left + this.wrapW;
+      this.is_switch = true;
+      this.is_play = false;
+      clearInterval(this.play_interval);
+    },
     init_pos(t1,t2,direction){
         if(direction == 'y'){
           if(t1 <= t2){
@@ -294,7 +359,6 @@ export default {
           }
         }else{
           if(t1 <= t2){
-//            con
             this.left = t1 - t2 + this.initLeft   <=  - this.maxL  ?  - this.maxL   :  t1 - t2 + this.initLeft ;
           }else{
             this.left = t1 - t2 + this.initLeft >=  this.maxL ?  this.maxL :  t1 - t2 + this.initLeft ;
@@ -344,7 +408,13 @@ export default {
     },
     autoPlay(){
       this.is_play = !this.is_play;
-      this.initCount = this.count;
+      this.is_switch = false; //切换为自动播放模式
+//      this.listInitLeft -=  this.dWrapW;
+      this.listleftC = this.listInitLeft;
+      if(this.initCount == null){
+        this.initCount = this.count;
+        this.listInitLeft = this.listleftC;
+      }
       if(this.is_play){
         this.play_interval = setInterval(()=>{
             if(this.count +1 >= this.len){
@@ -353,7 +423,6 @@ export default {
             }else{
               this.suf();
             }
-            this.listStyle = {'marginLeft' : `-${(this.count - this.initCount)*120}px`}
         },this.period);
       }else{
           clearInterval(this.play_interval);
@@ -377,6 +446,7 @@ export default {
   position: fixed;
   height: 100%;
   width: 100%;
+  overflow: visible;
   left: 0;
   top:0;
   z-index: 100;
@@ -464,14 +534,14 @@ export default {
     bottom: 100px;
   }
   .pre_img_con_list{
-    min-width: 100%;
+    width: 100%;
     height: 100px;
     position: absolute;
     display: flex;
     flex-wrap: nowrap;
+    justify-content: space-around;
     bottom: 0;
     background: black;
-    text-align: center;
     .img{
       display: inline-block;
       width: 100px;
@@ -490,10 +560,7 @@ export default {
       height: 100px;
       line-height: 100px;
       font-size: 30px;
-      position: fixed;
       color: white;
-      bottom: 0;
-      z-index: 4;
     }
     .icon:hover{
       background: rgba(255,255,255,0.3);
@@ -504,6 +571,10 @@ export default {
     }
     .icon-arrow-r{
       right: 0;
+    }
+    .img_list_wrap{
+      overflow: hidden;
+      text-align: left;
     }
   }
   .loading_icon{

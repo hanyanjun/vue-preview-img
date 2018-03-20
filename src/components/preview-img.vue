@@ -99,6 +99,7 @@ export default{
                 this.img_w_h = {height:'100%'};
               }
             }else{
+              this.img_w_h = {};
               this.top = (h - i_h)/2;
               this.left =(w - i_w)/2;
             }
@@ -110,7 +111,6 @@ export default{
         },300);
       },
       select_img(){
-        console.log(this.$refs.pre_img_content.getBoundingClientRect());
         this.$emit('select',this.url);
       }
     },
