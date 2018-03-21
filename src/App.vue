@@ -54,7 +54,7 @@
        </span><span class="fn_module pointer" @click.stop="spin">
            <i class="icon icon-rotate"></i>
             旋转
-       </span><span class="fn_module pointer" @click.stop="init">
+       </span><span class="fn_module pointer" @click.stop="back">
            <i class="icon icon-init"></i>
             复位
        </span>
@@ -121,11 +121,14 @@ export default {
       this.h = parseInt(this.$refs.pre_img_content.offsetHeight);
       this.listD = this.$refs.pre_img_list_wrap;
       this.wrapD = document.querySelector('#hw-preview_img_wrap');
-      this.initWrapW = this.wrapD.getBoundingClientRect().width;
+      this.initWrapW = this.wrapD.getBoundingClientRect().width - 60;
       window.onresize =()=>{
-          this.wrapW = this.wrapD.getBoundingClientRect().width;
-          this.dWrapW = this.initWrapW - this.wrapW;
-//          this.listInitLeft = this.listInitLeft - (this.wrapW - w);
+          this.wrapW = this.wrapD.getBoundingClientRect().width - 60;
+//          页面缩放记录前后变化值
+          if((this.count + 1)*112 + this.listleftC > this.wrapW ){
+              this.dWrapW  = (this.count + 1)*112 - this.wrapW + this.listleftC;
+              console.log(this.dWrapW);
+          }
       }
       setTimeout(()=>{
         this.$emit('update:url','https://www.hanyanjun.top/static/image/6.jpg');
@@ -141,13 +144,20 @@ export default {
     imgs_srpead(v){
         if(v){
             this.$nextTick(()=>{
-              this.wrapW = this.wrapD.getBoundingClientRect().width;
+              this.wrapW = this.wrapD.getBoundingClientRect().width - 60;
             })
         }
     },
     is_switch(v,o){
         if(!v){
 //          this.listInitLeft = parseInt(this.listD.style.marginLeft);
+        }
+    },
+    is_play(v){
+        console.log(v);
+        if(!v){
+          console.log(111);
+          clearInterval(this.play_interval);
         }
     }
   },
@@ -210,20 +220,31 @@ export default {
         return 110*this.len + 40;
     },
     maxListW(){
-      return this.listW - this.wrapW + 112;
+      return this.listW - this.wrapW;
     },
     listLeft(){
       let s = 0;
       if(this.wrapW && this.wrapW < this.listW && this.initCount != null){
-        if(this.initCount < this.count){
-          if((this.count - this.initCount)*112  - this.listInitLeft - this.dWrapW > this.maxListW ){
-             s =  -this.maxListW;
+//         两种情况：1.一直在往后挪需要加初始left值 2.从头开始了 那么不需要加初始left值
+          if(this.count > this.initCount){
+              s = -(this.count - this.initCount)*112 - this.listInitLeft ;
+              s -= this.dWrapW;
+          }else if(this.count < this.initCount){
+               s =  -this.count*112 ;
           }else{
-             s = -(this.count - this.initCount)*112 - this.listInitLeft - this.dWrapW;
+//              如果点过下面的想左和向右 表示当前图片不在可视区域内  需重新移动位置 那么left值就为初始left值 否则为0
+              if(this.listleftC){
+                s = -this.listInitLeft;
+              }else{
+                this.listleftC = 0;
+                s = 0;
+              }
+              s -= this.dWrapW;
           }
-        }else{
-             s = (this.count - this.initCount)*112 + this.listInitLeft - this.dWrapW;
-        }
+//          如果值小于最小值  那么就为最小值
+          if(s < -this.maxListW ){
+            s =  -this.maxListW;
+          }
       }
       return s;
     }
@@ -236,7 +257,7 @@ export default {
       urls:{
           type : Array,
           default : function () {
-            return ['https://www.hanyanjun.top/static/image/2.jpg','https://www.hanyanjun.top/static/image/3.jpg','https://www.hanyanjun.top/static/image/4.jpg','https://www.hanyanjun.top/static/image/5.jpg','https://www.hanyanjun.top/static/image/6.jpg','https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1521460527371&di=45d13be1e15090e20d1bfb372bc404a1&imgtype=0&src=http%3A%2F%2Fimages2015.cnblogs.com%2Fblog%2F603812%2F201604%2F603812-20160423232657101-1637286243.png','http://img3.imgtn.bdimg.com/it/u=1410462070,509649449&fm=27&gp=0.jpg','http://file.mumayi.com/forum/201602/28/164722sy84snndg8a0pnsm.jpg','http://dl.bizhi.sogou.com/images/2012/02/11/25025.jpg','http://img4.duitang.com/uploads/item/201206/25/20120625160633_JhFfM.jpeg','http://pic1.win4000.com/wallpaper/f/53bb9aa9c4eef.jpg','http://4493bz.1985t.com/uploads/allimg/141021/4-141021143J7.jpg','http://pic1.win4000.com/wallpaper/4/57b6a7f82383b.jpg','http://pic1.5442.com/2013/0607/04/11.jpg','http://img.zcool.cn/community/03879005798abdc0000018c1b07f124.jpg','http://old.bz55.com/uploads/allimg/140717/1-140GF94204-50.jpg','http://img.mp.sohu.com/upload/20170901/f360fad61b714b669795b13e601e5f1f_th.png','http://up.enterdesk.com/edpic_source/1b/79/40/1b7940ec78c11a7e897bf702db3a77ac.jpg','http://img2.imgtn.bdimg.com/it/u=1361461298,2055198744&fm=27&gp=0.jpg']
+            return ['https://www.hanyanjun.top/static/image/2.jpg','https://www.hanyanjun.top/static/image/3.jpg','https://www.hanyanjun.top/static/image/4.jpg','https://www.hanyanjun.top/static/image/5.jpg','https://www.hanyanjun.top/static/image/6.jpg','https://www.hanyanjun.top/static/image/7.jpg','https://www.hanyanjun.top/static/image/8.jpg','https://www.hanyanjun.top/static/image/9.jpg','https://www.hanyanjun.top/static/image/10.jpg','https://www.hanyanjun.top/static/image/11.jpg','https://www.hanyanjun.top/static/image/12.jpg','https://www.hanyanjun.top/static/image/13.jpg','https://www.hanyanjun.top/static/image/14.jpg','https://www.hanyanjun.top/static/image/15.jpg','https://www.hanyanjun.top/static/image/16.jpg','https://www.hanyanjun.top/static/image/17.jpg','https://www.hanyanjun.top/static/image/18.jpg','https://www.hanyanjun.top/static/image/19.jpg']
           }
       },
       url:{
@@ -292,7 +313,9 @@ export default {
         this.$emit('select',v);
         this.url = v;
         this.initCount =this.count;
-        this.listInitLeft = this.listleftC;
+        this.is_switch = false;
+//        选择图片时记录初始left值
+        this.listInitLeft = - parseInt(this.listD.style.marginLeft); //选择图片时  初始化left值
         this.init();
     },
     pre(v){
@@ -314,6 +337,10 @@ export default {
       }else{
         this.$emit('suf','max');
       }
+    },
+    back(){
+      this.is_play = !this.is_play;
+      this.init();
     },
     bigger(){
       let s = this.scale;
@@ -341,14 +368,12 @@ export default {
       this.listleftC = left - this.wrapW   <  - this.maxListW ?  -this.maxListW :  left - this.wrapW;
       this.is_switch = true;
       this.is_play = false;
-      clearInterval(this.play_interval);
     },
     l_pre(){
       let left = parseInt(this.listD.style.marginLeft);
       this.listleftC = left + this.wrapW  > 0 ?  0  : left + this.wrapW;
       this.is_switch = true;
       this.is_play = false;
-      clearInterval(this.play_interval);
     },
     init_pos(t1,t2,direction){
         if(direction == 'y'){
@@ -409,11 +434,8 @@ export default {
     autoPlay(){
       this.is_play = !this.is_play;
       this.is_switch = false; //切换为自动播放模式
-//      this.listInitLeft -=  this.dWrapW;
-      this.listleftC = this.listInitLeft;
       if(this.initCount == null){
         this.initCount = this.count;
-        this.listInitLeft = this.listleftC;
       }
       if(this.is_play){
         this.play_interval = setInterval(()=>{
@@ -424,8 +446,6 @@ export default {
               this.suf();
             }
         },this.period);
-      }else{
-          clearInterval(this.play_interval);
       }
     },
     close(){
