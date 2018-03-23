@@ -3,7 +3,9 @@
     <h6 class="title">{{title}}({{count+1}}/{{len}})</h6>
     <i class="icon-close pointer" @click.stop="close"></i>
     <div class="pre_img_content">
-        <i class="icon icon-arrow-l" @click.stop="pre"></i>
+        <div class="pre_img_content_icon pointer" @click.stop="pre">
+          <i class="icon icon-arrow-l" ></i>
+        </div>
         <div :class="['pre_img_cur_wrap',{'pre_img_cur_move':is_move}]"  ref="pre_img_content">
            <preview-img
              :url="url"
@@ -20,7 +22,9 @@
              <!--<i class="loading_icon icon-load1" slot="load"></i>-->
            </preview-img>
         </div>
-        <i class="icon icon-arrow-r" @click.stop="suf"></i>
+        <div class="pre_img_content_icon pointer" @click.stop="suf">
+          <i class="icon icon-arrow-r" ></i>
+        </div>
     </div>
     <div class="imgs_info"></div>
     <div :class="['pre_img_con_fn',{pre_img_con_fn_active :imgs_srpead }]">
@@ -485,30 +489,39 @@ export default {
     color: white;
   }
   .pre_img_content{
-    width: 1000px;
-    height: 600px;
+    width: 80%;
+    height: 70%;
     position: absolute;
     text-align: left;
     top: 50%;
     left: 50%;
+    margin-left: -40%;
     border: 1px solid rgba(255,255,255,0.3);
-    transform: translateY(-54%);
-    margin-left: -500px;
+    transform: translateY(-60%);
     display: flex;
     flex-wrap: nowrap;
-    .icon{
-      font-weight: bolder;
-      color: #717171;
-      line-height: 600px;
-      font-size: 70px;
+    .pre_img_content_icon{
+      position: relative;
+      width: 7%;
+      height: 100%;
+      .icon{
+        font-weight: bolder;
+        color: #717171;
+        display: inline-block;
+        font-size: 70px;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        margin-top: -35px;
+        margin-left: -35px;
+      }
     }
-    .icon:hover{
+    .pre_img_content_icon:hover>.icon{
       color: white;
-      cursor: pointer;
     }
     .pre_img_cur_wrap{
-      width: 800px;
-      height: 600px;
+      width: 85%;
+      height: 100%;
       overflow: hidden;
       position: relative;
       margin: 0 auto;

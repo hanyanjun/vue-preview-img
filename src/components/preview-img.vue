@@ -24,7 +24,9 @@ export default{
         initTop : 0, //初始的top值
         initLeft : 0, //初始的left值
         top : 0,
-        left : 0
+        left : 0,
+        wrapDom : '',
+        s : 0 //原始图片比例
     }},
     props:{
         url : {
@@ -71,57 +73,78 @@ export default{
       init(v){
         this.loaded = false;
         setTimeout(()=>{
+//            添加屏幕变化重新计算位置函数
+          window.addEventListener("resize",this.resize,false);
           let image = new Image();
           image.src =v;
           image.onload =  ()=> {
-            this.w = parseInt(this.$refs.pre_img_content.offsetWidth);
-            this.h = parseInt(this.$refs.pre_img_content.offsetHeight);
-            let w = this.w;
-            let h = this.h;
             let i_w = image.width;
             let i_h = image.height;
-            let s = i_w/i_h;
             this.i_w = i_w;
             this.i_h = i_h;
+            this.s = i_w/i_h;
             this.loaded = true;
-            if(i_w >= w || i_h >= h){
-              if(s >= 1){
-                this.i_w = w;
-                this.i_h = w/s;
-                this.top = (h - w/s)/2;
-                this.left = 0;
-                this.img_w_h = {width:'100%'};
-              }else{
-                this.i_h = h;
-                this.i_w = w*s;
-                this.top = 0;
-                this.left = (w - h*s)/2;
-                this.img_w_h = {height:'100%'};
-              }
-            }else{
-              this.img_w_h = {};
-              this.top = (h - i_h)/2;
-              this.left =(w - i_w)/2;
-            }
-            this.$emit('update:initWidth',this.i_w);
-            this.$emit('update:initHeight',this.i_h);
-            this.$emit('update:i_top',this.top);
-            this.$emit('update:i_left',this.left);
+            this.resize();
           }
         },300);
       },
+      resize(){
+        this.w = parseInt(this.wrapDom.offsetWidth);
+        this.h = parseInt(this.wrapDom.offsetHeight);
+      },
       select_img(){
         this.$emit('select',this.url);
+      },
+      calcPos(){
+        let i_w = this.i_w;
+        let i_h = this.i_h;
+        let w = this.w;
+        let h = this.h;
+        let s = this.s;
+        if(i_w >= w || i_h >= h){
+          if(s >= 1){
+            this.top = (h - w/s)/2;
+            this.left = 0;
+            this.img_w_h = {width:'100%'};
+          }else{
+            this.top = 0;
+            this.left = (w - h*s)/2;
+            this.img_w_h = {height:'100%'};
+          }
+        }else{
+          this.top = (h - i_h)/2;
+          this.left =(w - i_w)/2;
+        }
+        this.$emit('update:initHeight',this.i_h);
+        this.$emit('update:initWidth',this.i_w);
+        this.$emit('update:i_top',this.top);
+        this.$emit('update:i_left',this.left);
       }
     },
     mounted(){
       this.init(this.url);
+      this.wrapDom = this.$refs.pre_img_content;
     },
     watch:{
         url(v,o){
             if(v){
                 this.init(v);
             }
+        },
+        h(v,o){
+          if(o == this.i_h){
+              this.i_h = v;
+              this.i_w = v*this.s;
+          }
+          this.calcPos();
+        },
+        w(v,o){
+          if(o == this.i_w){
+              this.i_w = v;
+              this.i_h = v/this.s;
+
+          }
+          this.calcPos();
         },
         updatePos(v,o){
             if(v){
